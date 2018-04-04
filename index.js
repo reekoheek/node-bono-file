@@ -7,13 +7,13 @@ const util = require('util');
 const unlink = util.promisify(fs.unlink);
 
 class FileBundle extends Bundle {
-  constructor ({ baseDir = path.join(process.cwd(), 'files'), fs: optFs } = {}) {
+  constructor ({ dataDir = path.join(process.cwd(), 'files'), fs: optFs } = {}) {
     super();
 
     this.post('/upload', this.upload.bind(this));
 
     this.fs = optFs || fs;
-    this.baseDir = baseDir;
+    this.dataDir = dataDir;
   }
 
   async upload (ctx) {
@@ -35,7 +35,7 @@ class FileBundle extends Bundle {
 
     let fileInfos = await Promise.all(files.map(async file => {
       let name = await getFileHash(file);
-      let filepath = path.join(this.baseDir, bucket, name);
+      let filepath = path.join(this.dataDir, bucket, name);
       let filedir = path.dirname(filepath);
       await mkdirP(this.fs, filedir);
 

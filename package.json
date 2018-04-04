@@ -1,6 +1,6 @@
 {
   "name": "bono-file",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bono file server",
   "main": "index.js",
   "repository": {

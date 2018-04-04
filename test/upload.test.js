@@ -13,7 +13,7 @@ describe('upload', () => {
   });
 
   it('upload file', async () => {
-    let bundle = new FileBundle({ baseDir: '/files', fs });
+    let bundle = new FileBundle({ dataDir: '/files', fs });
 
     let res = await test(bundle.callback())
       .post('/upload')
@@ -26,7 +26,7 @@ describe('upload', () => {
   });
 
   it('upload file to bucket', async () => {
-    let bundle = new FileBundle({ baseDir: '/files', fs });
+    let bundle = new FileBundle({ dataDir: '/files', fs });
 
     let res = await test(bundle.callback())
       .post('/upload?bucket=/fooBucket')
