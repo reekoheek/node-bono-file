@@ -34,8 +34,8 @@ class FileBundle extends Bundle {
     });
 
     let fileInfos = await Promise.all(files.map(async file => {
-      let name = await getFileHash(file);
-      let filepath = path.join(this.dataDir, bucket, name);
+      let serverName = await getFileHash(file);
+      let filepath = path.join(this.dataDir, bucket, serverName);
       let filedir = path.dirname(filepath);
       await mkdirP(this.fs, filedir);
 
@@ -53,8 +53,8 @@ class FileBundle extends Bundle {
 
       await unlink(file.path);
 
-      let { size, name: sourceName, type } = file;
-      return { bucket, name, sourceName, type, size };
+      let { size, name, type } = file;
+      return { bucket, name, serverName, type, size };
     }));
 
     ctx.body = fileInfos;
