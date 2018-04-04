@@ -1,1 +1,3 @@
-# node-bono-file
+# bono-file
+
+Bono file server
