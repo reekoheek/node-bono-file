@@ -109,9 +109,11 @@ async function mkdirP (fs, p, mode) {
       });
       resolve();
     } catch (err) {
-      if (err.errno !== process.EEXIST) {
-        return reject(err);
+      if (err.code === 'EEXIST') {
+        return resolve();
       }
+
+      return reject(err);
     }
   });
 };

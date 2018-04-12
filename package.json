@@ -1,6 +1,6 @@
 {
   "name": "bono-file",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Bono file server",
   "main": "index.js",
   "repository": {
@@ -14,7 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^8.2.2",
-    "bono": "^0.3.4",
+    "bono": "^0.3.5",
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
     "eslint-config-xinix": "^1.0.4",
