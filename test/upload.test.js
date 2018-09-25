@@ -21,8 +21,8 @@ describe('upload', () => {
       .attach('file', Buffer.from('bar'), 'bar.txt')
       .expect(200);
 
-    assert.equal(res.body[0].name, 'foo.txt');
-    assert.equal(res.body[1].name, 'bar.txt');
+    assert.strictEqual(res.body[0].name, 'foo.txt');
+    assert.strictEqual(res.body[1].name, 'bar.txt');
   });
 
   it('upload file to bucket', async () => {
@@ -33,7 +33,7 @@ describe('upload', () => {
       .attach('file', Buffer.from('foo'), 'foo.txt')
       .expect(200);
 
-    assert.equal(res.body[0].name, 'foo.txt');
+    assert.strictEqual(res.body[0].name, 'foo.txt');
     assert(fs.data.files.fooBucket);
   });
 });

@@ -8,27 +8,34 @@
     "url": "https://github.com/reekoheek/node-bono-file.git"
   },
   "scripts": {
-    "test": "npx mocha test/**"
+    "lint": "eslint .",
+    "test": "mocha test/**"
   },
   "author": "Ganesha <reekoheek@gmail.com> (http://sagara.id)",
   "license": "MIT",
   "devDependencies": {
-    "babel-eslint": "^8.2.2",
-    "bono": "^0.3.5",
-    "eslint": "^4.19.1",
-    "eslint-config-standard": "^11.0.0",
-    "eslint-config-xinix": "^1.0.4",
-    "eslint-plugin-import": "^2.9.0",
-    "eslint-plugin-node": "^6.0.1",
-    "eslint-plugin-promise": "^3.7.0",
-    "eslint-plugin-standard": "^3.0.1",
+    "babel-eslint": "^9.0.0",
+    "bono": "^1.0.0",
+    "eslint": "^5.6.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-config-xinix": "^1.1.2",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "husky": "^1.0.0-rc.15",
     "memory-fs": "^0.4.1",
-    "supertest": "^3.0.0"
+    "supertest": "^3.3.0"
   },
   "dependencies": {
     "formidable": "^1.2.1"
   },
   "peerDependencies": {
-    "bono": "^0.3.4"
+    "bono": "^1.0.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint && npm test"
+    }
   }
 }

@@ -116,6 +116,6 @@ async function mkdirP (fs, p, mode) {
       return reject(err);
     }
   });
-};
+}
 
 module.exports = FileBundle;
