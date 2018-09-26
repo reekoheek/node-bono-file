@@ -2,18 +2,41 @@ const Bundle = require('bono');
 const formidable = require('formidable');
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 const util = require('util');
 const unlink = util.promisify(fs.unlink);
+const getFileHash = require('./helpers/get-file-hash');
+const mkdirp = require('./helpers/mkdirp');
+const exists = require('./helpers/exists');
 
 class FileBundle extends Bundle {
-  constructor ({ dataDir = path.join(process.cwd(), 'files'), fs: optFs } = {}) {
+  constructor ({ dataDir = path.join(process.cwd(), 'data'), fs: optFs } = {}) {
     super();
 
+    this.use(async (ctx, next) => {
+      if (ctx.path.startsWith('/files')) {
+        try {
+          let matches = ctx.path.match(/^\/files(.*)$/);
+          let filepath = path.join(this.fileDir, matches[1]);
+          if (await exists(this.fs, filepath)) {
+            let rs = this.fs.createReadStream(filepath);
+            ctx.body = rs;
+            return;
+          }
+        } catch (err) {
+          throw err;
+        }
+        ctx.throw(404);
+        return;
+      }
+
+      await next();
+    });
     this.post('/upload', this.upload.bind(this));
 
     this.fs = optFs || fs;
     this.dataDir = dataDir;
+    this.fileDir = path.join(dataDir, 'files');
+    this.metadataDir = path.join(dataDir, 'metadata');
   }
 
   async upload (ctx) {
@@ -34,10 +57,14 @@ class FileBundle extends Bundle {
     });
 
     let fileInfos = await Promise.all(files.map(async file => {
-      let serverName = await getFileHash(file);
-      let filepath = path.join(this.dataDir, bucket, serverName);
+      let hash = await getFileHash(file);
+      let filepath = path.join(this.fileDir, bucket, hash);
+      let mdpath = path.join(this.metadataDir, bucket, hash);
       let filedir = path.dirname(filepath);
-      await mkdirP(this.fs, filedir);
+      let mddir = path.dirname(mdpath);
+
+      await mkdirp(this.fs, filedir);
+      await mkdirp(this.fs, mddir);
 
       await new Promise((resolve, reject) => {
         let rs = fs.createReadStream(file.path);
@@ -54,52 +81,10 @@ class FileBundle extends Bundle {
       await unlink(file.path);
 
       let { size, name, type } = file;
-      return { bucket, name, serverName, type, size };
-    }));
+      let metadata = { bucket, name, hash, type, size };
 
-    ctx.body = fileInfos;
-  }
-}
-
-function getFileHash (file, encoding = 'hex') {
-  return new Promise((resolve, reject) => {
-    try {
-      let f = fs.createReadStream(file.path);
-      let hash = crypto.createHash('sha1');
-      f.on('data', data => hash.update(data));
-      f.on('close', () => {
-        resolve(hash.digest(encoding));
-      });
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
-
-async function mkdirP (fs, p, mode) {
-  if (p.charAt(0) !== '/') {
-    throw new Error('Relative path: ' + p);
-  }
-
-  if (p === '/') {
-    return;
-  }
-
-  let exists = await new Promise(resolve => {
-    fs.exists(p, exists => resolve(exists));
-  });
-
-  if (exists) {
-    return;
-  }
-
-  return new Promise(async (resolve, reject) => {
-    let ps = path.normalize(p).split('/');
-    try {
-      let parentPath = ps.slice(0, -1).join('/') || '/';
-      await mkdirP(fs, parentPath, mode);
       await new Promise((resolve, reject) => {
-        fs.mkdir(p, mode, err => {
+        this.fs.writeFile(mdpath, JSON.stringify(metadata, null, 2), err => {
           if (err) {
             return reject(err);
           }
@@ -107,15 +92,12 @@ async function mkdirP (fs, p, mode) {
           resolve();
         });
       });
-      resolve();
-    } catch (err) {
-      if (err.code === 'EEXIST') {
-        return resolve();
-      }
 
-      return reject(err);
-    }
-  });
+      return metadata;
+    }));
+
+    ctx.body = fileInfos;
+  }
 }
 
 module.exports = FileBundle;
