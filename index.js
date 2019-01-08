@@ -6,37 +6,19 @@ const util = require('util');
 const unlink = util.promisify(fs.unlink);
 const getFileHash = require('./helpers/get-file-hash');
 const mkdirp = require('./helpers/mkdirp');
-const exists = require('./helpers/exists');
+const FsBundle = require('./bundles/fs');
 
 class FileBundle extends Bundle {
   constructor ({ dataDir = path.join(process.cwd(), 'data'), fs: optFs } = {}) {
     super();
 
-    this.use(async (ctx, next) => {
-      if (ctx.path.startsWith('/files')) {
-        try {
-          let matches = ctx.path.match(/^\/files(.*)$/);
-          let filepath = path.join(this.fileDir, matches[1]);
-          if (await exists(this.fs, filepath)) {
-            let rs = this.fs.createReadStream(filepath);
-            ctx.body = rs;
-            return;
-          }
-        } catch (err) {
-          throw err;
-        }
-        ctx.throw(404);
-        return;
-      }
-
-      await next();
-    });
-    this.post('/upload', this.upload.bind(this));
-
     this.fs = optFs || fs;
     this.dataDir = dataDir;
     this.fileDir = path.join(dataDir, 'files');
     this.metadataDir = path.join(dataDir, 'metadata');
+
+    this.bundle('/files', new FsBundle(this));
+    this.post('/upload', this.upload.bind(this));
   }
 
   async upload (ctx) {
@@ -46,7 +28,7 @@ class FileBundle extends Bundle {
       try {
         let files = [];
         let form = new formidable.IncomingForm();
-        form.on('file', (field, file) => files.push(file));
+        form.on('file', (_, file) => files.push(file));
         form.on('error', reject);
         form.on('abort', reject);
         form.on('end', () => resolve(files));

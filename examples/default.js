@@ -19,4 +19,4 @@ bundle.get('/', ctx => {
 });
 
 let server = http.createServer(bundle.callback());
-server.listen(PORT);
+server.listen(PORT, () => console.info(`Listening on port ${PORT}`));

@@ -35,5 +35,7 @@ server.listen(PORT, () => console.info('Listening at', PORT));
 ```js
 let hash = 'change this to file hash';
 
-await fetch(`/files/foo/${hash}`);
+await fetch(`/files/foo/${hash}`); // get as mimetype
+await fetch(`/files/foo/${hash}?attachment=1`); // download with default name
+await fetch(`/files/foo/${hash}?attachment=1&name=foo.txt`); // download with specified name
 ```

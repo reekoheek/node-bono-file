@@ -48,6 +48,6 @@ describe('upload', () => {
       .get(`/files/fooBucket/${hash}`)
       .expect(200);
 
-    assert.strictEqual(res.body.toString('base64'), fb.toString('base64'));
+    assert.strictEqual(res.text, fb.toString());
   });
 });
