@@ -1,5 +1,4 @@
 const Bundle = require('bono');
-const formidable = require('formidable');
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
@@ -17,26 +16,19 @@ class FileBundle extends Bundle {
     this.fileDir = path.join(dataDir, 'files');
     this.metadataDir = path.join(dataDir, 'metadata');
 
+    this.use(require('./middlewares/upload')());
+
     this.bundle('/files', new FsBundle(this));
     this.post('/upload', this.upload.bind(this));
   }
 
   async upload (ctx) {
     let { bucket = '/' } = ctx.query;
+    if (bucket[0] !== '/') {
+      bucket = '/' + bucket;
+    }
 
-    let files = await new Promise((resolve, reject) => {
-      try {
-        let files = [];
-        let form = new formidable.IncomingForm();
-        form.on('file', (_, file) => files.push(file));
-        form.on('error', reject);
-        form.on('abort', reject);
-        form.on('end', () => resolve(files));
-        form.parse(ctx.req);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    let files = ctx.request.files;
 
     let fileInfos = await Promise.all(files.map(async file => {
       let hash = await getFileHash(file);

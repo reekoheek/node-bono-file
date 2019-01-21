@@ -15,16 +15,16 @@ module.exports = class FsBundle extends Bundle {
   }
 
   async doRouting (ctx, next) {
-    let bucketPath = ctx.path;
+    let absolutePath = ctx.path;
 
-    if (bucketPath === '/') {
+    if (absolutePath === '/') {
       return next();
     }
 
     try {
-      let filepath = path.join(this.fileDir, bucketPath);
+      let filepath = path.join(this.fileDir, absolutePath);
       if (await exists(this.fs, filepath)) {
-        let metadata = await this.getMetadata(bucketPath);
+        let metadata = await this.getMetadata(absolutePath);
 
         ctx.set('Content-Type', metadata.type);
         if (ctx.query.attachment) {
