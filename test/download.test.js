@@ -5,23 +5,27 @@ const MemoryFileSystem = require('memory-fs');
 
 describe('download', () => {
   it('download file', async () => {
-    let hash = '1234567890';
+    let hash = 'foo1:1234567890';
     let fb = Buffer.from('foo');
     let data = {
       files: {
         '': true,
-        'fooBucket': {
+        'foo1': {
           '': true,
-          '1234567890': fb,
+          '12': {
+            '': true,
+            '34567890': fb,
+          },
         },
       },
       metadata: {
         '': true,
         'fooBucket': {
           '': true,
-          '1234567890': Buffer.from(JSON.stringify({
+          'foo.txt': Buffer.from(JSON.stringify({
             name: 'foo.txt',
             type: 'text/foo',
+            hash,
           })),
         },
       },
@@ -31,7 +35,7 @@ describe('download', () => {
     let bundle = new FileBundle({ dataDir: '/', fs });
 
     let res = await test(bundle.callback())
-      .get(`/files/fooBucket/${hash}`)
+      .get(`/files/fooBucket/foo.txt`)
       .expect(200);
 
     assert.strictEqual(res.headers['content-type'], 'text/foo');
@@ -40,23 +44,27 @@ describe('download', () => {
   });
 
   it('download file as attachment', async () => {
-    let hash = '1234567890';
+    let hash = 'foo1:1234567890';
     let fb = Buffer.from('foo');
     let data = {
       files: {
         '': true,
-        'fooBucket': {
+        'foo1': {
           '': true,
-          '1234567890': fb,
+          '12': {
+            '': true,
+            '34567890': fb,
+          },
         },
       },
       metadata: {
         '': true,
         'fooBucket': {
           '': true,
-          '1234567890': Buffer.from(JSON.stringify({
+          'foo.txt': Buffer.from(JSON.stringify({
             name: 'foo.txt',
             type: 'text/foo',
+            hash,
           })),
         },
       },
@@ -66,7 +74,7 @@ describe('download', () => {
     let bundle = new FileBundle({ dataDir: '/', fs });
 
     let res = await test(bundle.callback())
-      .get(`/files/fooBucket/${hash}?attachment=1`)
+      .get(`/files/fooBucket/foo.txt?attachment=1`)
       .expect(200);
 
     assert.strictEqual(res.headers['content-type'], 'text/foo');

@@ -4,6 +4,7 @@ const fs = require('fs');
 const util = require('util');
 const unlink = util.promisify(fs.unlink);
 const getFileHash = require('./helpers/get-file-hash');
+const getFilepathByHash = require('./helpers/get-filepath-by-hash');
 const mkdirp = require('./helpers/mkdirp');
 const FsBundle = require('./bundles/fs');
 
@@ -32,8 +33,8 @@ class FileBundle extends Bundle {
 
     let fileInfos = await Promise.all(files.map(async file => {
       let hash = await getFileHash(file);
-      let filepath = path.join(this.fileDir, bucket, hash);
-      let mdpath = path.join(this.metadataDir, bucket, hash);
+      let filepath = getFilepathByHash(this.fileDir, hash);
+      let mdpath = path.join(this.metadataDir, bucket, file.name);
       let filedir = path.dirname(filepath);
       let mddir = path.dirname(mdpath);
 
@@ -56,7 +57,6 @@ class FileBundle extends Bundle {
 
       let { size, name, type } = file;
       let metadata = { bucket, name, hash, type, size };
-
       await new Promise((resolve, reject) => {
         this.fs.writeFile(mdpath, JSON.stringify(metadata, null, 2), err => {
           if (err) {

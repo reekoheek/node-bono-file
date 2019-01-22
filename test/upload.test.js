@@ -41,11 +41,10 @@ describe('upload', () => {
     assert.strictEqual(res.body[0].type, 'text/plain');
     assert.strictEqual(res.body[0].size, fb.length);
 
-    assert(fs.data.files.fooBucket);
-    assert.strictEqual(fs.data.files.fooBucket[hash].toString('base64'), fb.toString('base64'));
+    assert.strictEqual(fs.data.files.sha256['2c']['26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'].toString('base64'), fb.toString('base64'));
 
     res = await test(bundle.callback())
-      .get(`/files/fooBucket/${hash}`)
+      .get(`/files/fooBucket/foo.txt`)
       .expect(200);
 
     assert.strictEqual(res.text, fb.toString());
