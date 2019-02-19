@@ -16,7 +16,7 @@ module.exports = class FsBundle extends Bundle {
   }
 
   async doRouting (ctx, next) {
-    let absolutePath = ctx.path;
+    let absolutePath = decodeURIComponent(ctx.path);
 
     if (absolutePath === '/') {
       return next();
