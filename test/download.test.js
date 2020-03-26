@@ -1,84 +1,55 @@
-const test = require('supertest');
-const FileBundle = require('..');
+const tester = require('supertest');
 const assert = require('assert');
-const MemoryFileSystem = require('memory-fs');
+const path = require('path');
+const fse = require('fs-extra');
+const Bundle = require('bono');
+const FileSystem = require('../fs');
 
-describe('download', () => {
+const TEST_DIR = path.join(process.cwd(), 'test-tmp');
+const SRC_DIR = path.join(TEST_DIR, 'src');
+const DATA_DIR = path.join(TEST_DIR, 'data');
+
+describe('middleware:download', () => {
+  let fs;
+
+  beforeEach(async () => {
+    await fse.remove(TEST_DIR);
+    await fse.ensureDir(SRC_DIR);
+
+    const filePath = path.join(SRC_DIR, 'foo.txt');
+    await fse.writeFile(filePath, 'ini foo');
+
+    fs = new FileSystem({ dataDir: DATA_DIR });
+    await fs.writeFile({ name: 'foo.txt', path: filePath });
+  });
+
+  afterEach(async () => {
+    await fse.remove(TEST_DIR);
+  });
+
   it('download file', async () => {
-    let hash = 'foo1:1234567890';
-    let fb = Buffer.from('foo');
-    let data = {
-      files: {
-        '': true,
-        'foo1': {
-          '': true,
-          '12': {
-            '': true,
-            '34567890': fb,
-          },
-        },
-      },
-      metadata: {
-        '': true,
-        'fooBucket': {
-          '': true,
-          'foo.txt': Buffer.from(JSON.stringify({
-            name: 'foo.txt',
-            type: 'text/foo',
-            hash,
-          })),
-        },
-      },
-    };
+    const bundle = new Bundle();
+    bundle.use(require('../download')({ fs }));
 
-    let fs = new MemoryFileSystem(data);
-    let bundle = new FileBundle({ dataDir: '/', fs });
-
-    let res = await test(bundle.callback())
-      .get(`/files/fooBucket/foo.txt`)
+    const res = await tester(bundle.callback())
+      .get('/files/foo.txt')
       .expect(200);
 
-    assert.strictEqual(res.headers['content-type'], 'text/foo');
+    assert.strictEqual(res.headers['content-type'], 'text/plain');
     assert(!res.headers['content-disposition']);
-    assert.strictEqual(res.text, fb.toString());
+    assert.strictEqual(res.text, 'ini foo');
   });
 
   it('download file as attachment', async () => {
-    let hash = 'foo1:1234567890';
-    let fb = Buffer.from('foo');
-    let data = {
-      files: {
-        '': true,
-        'foo1': {
-          '': true,
-          '12': {
-            '': true,
-            '34567890': fb,
-          },
-        },
-      },
-      metadata: {
-        '': true,
-        'fooBucket': {
-          '': true,
-          'foo.txt': Buffer.from(JSON.stringify({
-            name: 'foo.txt',
-            type: 'text/foo',
-            hash,
-          })),
-        },
-      },
-    };
+    const bundle = new Bundle();
+    bundle.use(require('../download')({ fs }));
 
-    let fs = new MemoryFileSystem(data);
-    let bundle = new FileBundle({ dataDir: '/', fs });
-
-    let res = await test(bundle.callback())
-      .get(`/files/fooBucket/foo.txt?attachment=1`)
+    const res = await tester(bundle.callback())
+      .get('/files/foo.txt?attachment=1')
       .expect(200);
 
-    assert.strictEqual(res.headers['content-type'], 'text/foo');
+    assert.strictEqual(res.headers['content-type'], 'text/plain');
     assert.strictEqual(res.headers['content-disposition'], 'attachment; filename="foo.txt"');
-    assert.strictEqual(res.text, fb.toString());
+    assert.strictEqual(res.text, 'ini foo');
   });
 });

@@ -1,52 +1,31 @@
-const test = require('supertest');
-const FileBundle = require('..');
+const tester = require('supertest');
 const assert = require('assert');
-const MemoryFileSystem = require('memory-fs');
-const getFileHash = require('../helpers/get-file-hash');
+const path = require('path');
+const fse = require('fs-extra');
+const Bundle = require('bono');
+const FileSystem = require('../fs');
 
-describe('upload', () => {
-  // before(() => process.addListener('unhandledRejection', err => console.error('Unhandled', err)));
-  // after(() => process.removeAllListeners('unhandledRejection'));
+const TEST_DIR = path.join(process.cwd(), 'test-tmp');
 
-  let fs;
-  beforeEach(() => {
-    fs = new MemoryFileSystem();
-  });
+describe('middleware:upload', () => {
+  it('upload multiple files', async () => {
+    await fse.remove(TEST_DIR);
+    await fse.ensureDir(TEST_DIR);
 
-  it('upload file', async () => {
-    let bundle = new FileBundle({ dataDir: '/', fs });
+    try {
+      const fs = new FileSystem({ dataDir: TEST_DIR });
+      const bundle = new Bundle();
+      bundle.use(require('../upload')({ fs }));
 
-    let res = await test(bundle.callback())
-      .post('/upload')
-      .attach('file', Buffer.from('foo'), 'foo.txt')
-      .attach('file', Buffer.from('bar'), 'bar.txt')
-      .expect(200);
+      const { body } = await tester(bundle.callback())
+        .post('/upload')
+        .attach('file', Buffer.from('foo'), 'foo.txt')
+        .attach('file', Buffer.from('bar'), 'bar.txt')
+        .expect(201);
 
-    assert.strictEqual(res.body[0].name, 'foo.txt');
-    assert.strictEqual(res.body[1].name, 'bar.txt');
-  });
-
-  it('upload file to bucket', async () => {
-    let fb = Buffer.from('foo');
-    let bundle = new FileBundle({ dataDir: '/', fs });
-
-    let res = await test(bundle.callback())
-      .post('/upload?bucket=/fooBucket')
-      .attach('file', fb, 'foo.txt')
-      .expect(200);
-
-    let hash = getFileHash(fb);
-    assert.strictEqual(res.body[0].name, 'foo.txt');
-    assert.strictEqual(res.body[0].hash, hash);
-    assert.strictEqual(res.body[0].type, 'text/plain');
-    assert.strictEqual(res.body[0].size, fb.length);
-
-    assert.strictEqual(fs.data.files.sha256['2c']['26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae'].toString('base64'), fb.toString('base64'));
-
-    res = await test(bundle.callback())
-      .get(`/files/fooBucket/foo.txt`)
-      .expect(200);
-
-    assert.strictEqual(res.text, fb.toString());
+      assert.deepStrictEqual(body.entries.map(e => e.name), ['foo.txt', 'bar.txt']);
+    } finally {
+      await fse.remove(TEST_DIR);
+    }
   });
 });

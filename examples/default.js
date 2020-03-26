@@ -3,7 +3,7 @@ const FileBundle = require('..');
 
 const PORT = process.env.PORT || 3000;
 
-let bundle = new FileBundle();
+const bundle = new FileBundle();
 
 bundle.get('/', ctx => {
   ctx.body = `
@@ -18,5 +18,5 @@ bundle.get('/', ctx => {
   `;
 });
 
-let server = http.createServer(bundle.callback());
+const server = http.createServer(bundle.callback());
 server.listen(PORT, () => console.info(`Listening on port ${PORT}`));
